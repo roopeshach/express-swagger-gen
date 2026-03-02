@@ -394,4 +394,4 @@ Contributions are welcome! Please read our contributing guidelines and submit a 
 
 ## License
 
-MIT © Your Name
+MIT © [Roopesh Acharya](https://github.com/roopeshach)
