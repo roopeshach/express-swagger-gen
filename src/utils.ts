@@ -16,14 +16,6 @@ import type {
 } from './types';
 
 // ============================================
-// Constants
-// ============================================
-
-const ZERO = 0;
-const ONE = 1;
-const NEGATIVE_ONE = -1;
-
-// ============================================
 // Path Utilities
 // ============================================
 
@@ -35,7 +27,7 @@ export const normalizePath = (value: string): string =>
   value.replace(/:([^/]+)/g, '{$1}');
 
 const splitPathSegments = (value: string): string[] =>
-  value.split('/').filter((segment) => segment.length > ZERO);
+  value.split('/').filter(Boolean);
 
 const stripCommonPrefix = (base: string, next: string): string => {
   if (!next.startsWith('/')) {
@@ -45,28 +37,21 @@ const stripCommonPrefix = (base: string, next: string): string => {
   const baseSegments = splitPathSegments(base);
   const nextSegments = splitPathSegments(next);
 
-  if (baseSegments.length === ZERO || nextSegments.length === ZERO) {
+  if (baseSegments.length === 0 || nextSegments.length === 0) {
     return next;
   }
 
   let index = 0;
-  while (
-    index < baseSegments.length &&
-    index < nextSegments.length &&
-    baseSegments[index] === nextSegments[index]
-  ) {
-    index += ONE;
+  const minLen = Math.min(baseSegments.length, nextSegments.length);
+  while (index < minLen && baseSegments[index] === nextSegments[index]) {
+    index++;
   }
 
-  if (index === ZERO) {
-    return next;
-  }
-
-  return `/${nextSegments.slice(index).join('/')}`;
+  return index === 0 ? next : `/${nextSegments.slice(index).join('/')}`;
 };
 
 const joinPaths = (base: string, next: string): string => {
-  const basePath = base.endsWith('/') ? base.slice(ZERO, NEGATIVE_ONE) : base;
+  const basePath = base.endsWith('/') ? base.slice(0, -1) : base;
   const nextInput = next.startsWith('/') ? next : `/${next}`;
   const nextPath = stripCommonPrefix(basePath, nextInput);
 
@@ -92,71 +77,18 @@ const isPathPrefix = (prefix: string, full: string): boolean => {
 };
 
 // ============================================
-// Regex Utilities
+// Regex Utilities - Optimized
 // ============================================
 
-const stripRegexAnchors = (value: string): string =>
-  value.replace(/^\^/, '').replace(/\$$/, '');
+/** Combined regex patterns for Express path param extraction */
+const PARAM_GROUP_PATTERNS = /\(\?:\/\(\[\^\/]\+\?\)\)|\(\?:\/\(\[\^\/]\+\)\)|\/\(\[\^\/]\+\?\)|\/\(\[\^\/]\+\)|\(\[\^\/]\+\?\)|\(\[\^\/]\+\)|\(\?:\[\^\/]\+\?\)|\(\?:\[\^\/]\+\)/g;
 
-const stripExpressRegexSuffix = (value: string): string =>
-  value.replace(/\\\/\?\(\?=\\\/\|\$\)/g, '').replace(/\(\?=\\\/\|\$\)/g, '');
-
-const unescapeRegexTokens = (value: string): string =>
-  value.replace(/\\\//g, '/').replace(/\\\./g, '.');
+/** Characters to strip from regex source */
+const CLEANUP_PATTERN = /\(\?:|\)|\?|\||\\|\/+/g;
 
 /**
- * Replace Express path param capture groups with `:paramName`
+ * Extract path from Express layer regex
  */
-const replaceParamGroups = (value: string, keys: ExpressKey[]): string => {
-  let keyIndex = 0;
-  const nextKey = (): string => {
-    const key = keys[keyIndex++];
-    if (typeof key === 'string') {
-      return `:${key}`;
-    }
-    return `:${key?.name ?? 'param'}`;
-  };
-
-  const replacements: [RegExp, () => string][] = [
-    [/\(\?:\/\(\[\^\/\]\+\?\)\)/g, (): string => `/${nextKey()}`],
-    [/\(\?:\/\(\[\^\/\]\+\)\)/g, (): string => `/${nextKey()}`],
-    [/\/\(\[\^\/\]\+\?\)/g, (): string => `/${nextKey()}`],
-    [/\/\(\[\^\/\]\+\)/g, (): string => `/${nextKey()}`],
-    [/\(\[\^\/\]\+\?\)/g, (): string => nextKey()],
-    [/\(\[\^\/\]\+\)/g, (): string => nextKey()],
-    [/\(\?:\[\^\/\]\+\?\)/g, (): string => nextKey()],
-    [/\(\?:\[\^\/\]\+\)/g, (): string => nextKey()],
-  ];
-
-  return replacements.reduce(
-    (acc, [pattern, replacement]) => acc.replace(pattern, replacement),
-    value,
-  );
-};
-
-/**
- * Strip leftover regex tokens and normalize slashes
- */
-const stripRemainingRegexTokens = (value: string): string => {
-  const cleanup: [RegExp, string][] = [
-    [/\(\?:/g, ''],
-    [/\)/g, ''],
-    [/\?/g, ''],
-    [/\|/g, ''],
-    [/\\/g, ''],
-    [/\/+/g, '/'],
-  ];
-
-  return cleanup.reduce(
-    (acc, [pattern, replacement]) => acc.replace(pattern, replacement),
-    value,
-  );
-};
-
-// ============================================
-// Layer Path Extraction
-// ============================================
-
 const getLayerPath = (layer: ExpressLayer): string | null => {
   if (layer.path) {
     return layer.path;
@@ -169,18 +101,36 @@ const getLayerPath = (layer: ExpressLayer): string | null => {
   }
 
   const keys = Array.isArray(layer.keys) ? layer.keys : [];
+  let keyIndex = 0;
 
-  let source = stripRegexAnchors(layer.regexp.source);
-  source = stripExpressRegexSuffix(source);
-  source = replaceParamGroups(source, keys);
-  source = unescapeRegexTokens(source);
-  source = stripRemainingRegexTokens(source);
+  // Remove anchors and Express suffix in one pass
+  let source = layer.regexp.source
+    .replace(/^\^/, '')
+    .replace(/\$$/, '')
+    .replace(/\\\/\?\(\?=\\\/\|\$\)/g, '')
+    .replace(/\(\?=\\\/\|\$\)/g, '');
 
+  // Replace param groups with :paramName
+  source = source.replace(PARAM_GROUP_PATTERNS, (match) => {
+    const key = keys[keyIndex++];
+    const paramName = typeof key === 'string' ? key : key?.name ?? 'param';
+    return match.startsWith('/') || match.includes('/') ? `/:${paramName}` : `:${paramName}`;
+  });
+
+  // Unescape and cleanup
+  source = source
+    .replace(/\\\//g, '/')
+    .replace(/\\\./g, '.')
+    .replace(CLEANUP_PATTERN, (char) => char === '/' ? '/' : '');
+
+  // Normalize slashes
+  source = source.replace(/\/+/g, '/');
+  
   if (!source.startsWith('/')) {
     source = `/${source}`;
   }
   if (source !== '/' && source.endsWith('/')) {
-    source = source.slice(ZERO, NEGATIVE_ONE);
+    source = source.slice(0, -1);
   }
 
   return source === '/?' ? '' : source;
@@ -199,7 +149,7 @@ const isRouterHandle = (value: unknown): value is ExpressRouter =>
   typeof value === 'function' && Array.isArray((value as ExpressRouter).stack);
 
 // ============================================
-// Swagger Meta Collection
+// Swagger Meta Collection - Optimized
 // ============================================
 
 /**
@@ -207,13 +157,32 @@ const isRouterHandle = (value: unknown): value is ExpressRouter =>
  */
 export const collectSwaggerMeta = (
   middlewares: ExpressMiddleware[],
-): SwaggerMeta[] =>
-  middlewares
-    .map((middleware) => {
-      const tagged = middleware as SwaggerTaggedMiddleware;
-      return isSwaggerTaggedMiddleware(tagged) ? tagged.__swagger : undefined;
-    })
-    .filter((meta): meta is SwaggerMeta => Boolean(meta));
+): SwaggerMeta[] => {
+  const result: SwaggerMeta[] = [];
+  for (const middleware of middlewares) {
+    const tagged = middleware as unknown as SwaggerTaggedMiddleware;
+    if (isSwaggerTaggedMiddleware(tagged) && tagged.__swagger) {
+      result.push(tagged.__swagger);
+    }
+  }
+  return result;
+};
+
+/**
+ * Collect Swagger metadata as a map for O(1) lookup
+ */
+export const collectSwaggerMetaMap = (
+  middlewares: ExpressMiddleware[],
+): Map<SwaggerMeta['in'], SwaggerMeta> => {
+  const map = new Map<SwaggerMeta['in'], SwaggerMeta>();
+  for (const middleware of middlewares) {
+    const tagged = middleware as unknown as SwaggerTaggedMiddleware;
+    if (isSwaggerTaggedMiddleware(tagged) && tagged.__swagger) {
+      map.set(tagged.__swagger.in, tagged.__swagger);
+    }
+  }
+  return map;
+};
 
 // ============================================
 // Schema Conversion
