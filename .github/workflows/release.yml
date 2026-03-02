@@ -31,14 +31,13 @@ jobs:
         run: npm run build
 
       - name: Create Release PR or Publish
-        id: changesets
-        uses: google-github-actions/release-please-action@v4
+        id: release
+        uses: googleapis/release-please-action@v4
         with:
           release-type: node
-          package-name: express-swagger-gen
 
       - name: Publish to npm
-        if: steps.changesets.outputs.release_created
+        if: ${{ steps.release.outputs.release_created }}
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
