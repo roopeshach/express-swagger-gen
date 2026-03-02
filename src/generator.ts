@@ -16,14 +16,10 @@ import {
   buildParametersFromSchema,
   buildRequestBody,
   buildResponse,
-  collectSwaggerMeta,
+  collectSwaggerMetaMap,
   extractEndpoints,
   normalizePath,
 } from './utils';
-
-const ONE = 1;
-const TWO = 2;
-const ZERO = 0;
 
 /**
  * SwaggerGenerator - Auto-generate OpenAPI 3.0 documentation from Express routes
@@ -56,6 +52,7 @@ export class SwaggerGenerator {
   private router: ExpressRouter;
   private options: SwaggerGeneratorOptions;
   private securityMiddlewares: Set<string>;
+  private cachedEndpoints: Endpoint[] | null = null;
 
   constructor(router: ExpressRouter, options: SwaggerGeneratorOptions) {
     this.router = router;
@@ -68,16 +65,33 @@ export class SwaggerGenerator {
   }
 
   /**
+   * Get endpoints with caching to avoid redundant extraction
+   */
+  private getEndpoints(): Endpoint[] {
+    if (!this.cachedEndpoints) {
+      this.cachedEndpoints = extractEndpoints(this.router);
+    }
+    return this.cachedEndpoints;
+  }
+
+  /**
+   * Invalidate cached endpoints (call if router changes)
+   */
+  public invalidateCache(): void {
+    this.cachedEndpoints = null;
+  }
+
+  /**
    * Derive tag from path based on configured mappings
    */
   private deriveTag(pathValue: string): string {
     const segments = pathValue.replace(/^\//, '').split('/');
-    const root = segments[ZERO] ?? '';
+    const root = segments[0] ?? '';
 
     // Check for nested tag mappings (e.g., workspace/feature)
     if (this.options.nestedTagMappings?.[root]) {
       const nestedMapping = this.options.nestedTagMappings[root];
-      const feature = segments[TWO] ?? segments[ONE] ?? '';
+      const feature = segments[2] ?? segments[1] ?? '';
 
       if (feature && nestedMapping[feature]) {
         return nestedMapping[feature];
@@ -133,7 +147,7 @@ export class SwaggerGenerator {
     );
 
     const allEndpoints = [
-      ...extractEndpoints(this.router),
+      ...this.getEndpoints(),
       ...extraEndpoints,
     ].filter(
       (ep) => !excludeSet.has(`${ep.method.toUpperCase()} ${ep.path}`),
@@ -143,12 +157,13 @@ export class SwaggerGenerator {
 
     for (const endpoint of allEndpoints) {
       const normalizedPath = normalizePath(endpoint.path);
-      const swaggerMeta = collectSwaggerMeta(endpoint.middlewares);
-
-      const bodySchema = swaggerMeta.find((meta) => meta.in === 'body')?.schema;
-      const querySchema = swaggerMeta.find((meta) => meta.in === 'query')?.schema;
-      const paramsSchema = swaggerMeta.find((meta) => meta.in === 'params')?.schema;
-      const responseSchema = swaggerMeta.find((meta) => meta.in === 'response')?.schema;
+      
+      // Use map for O(1) lookup instead of O(n) find calls
+      const metaMap = collectSwaggerMetaMap(endpoint.middlewares);
+      const bodySchema = metaMap.get('body')?.schema;
+      const querySchema = metaMap.get('query')?.schema;
+      const paramsSchema = metaMap.get('params')?.schema;
+      const responseSchema = metaMap.get('response')?.schema;
 
       const pathParams = buildParametersFromSchema(paramsSchema, 'path');
       const queryParams = buildParametersFromSchema(querySchema, 'query');
@@ -157,20 +172,22 @@ export class SwaggerGenerator {
       const inferredParams = Array.from(
         normalizedPath.matchAll(/\{([^}]+)\}/g),
       ).map((match) => ({
-        name: match[ONE],
+        name: match[1],
         in: 'path' as const,
         required: true,
         schema: { type: 'string' },
       }));
 
+      // Use Set for O(1) deduplication check
+      const existingPathParams = new Set(
+        pathParams.filter((p) => p.in === 'path').map((p) => p.name)
+      );
       const parameters = [...pathParams, ...queryParams];
+      
       for (const inferred of inferredParams) {
-        if (
-          !parameters.some(
-            (param) => param.name === inferred.name && param.in === 'path',
-          )
-        ) {
+        if (!existingPathParams.has(inferred.name)) {
           parameters.push(inferred);
+          existingPathParams.add(inferred.name);
         }
       }
 
@@ -180,7 +197,7 @@ export class SwaggerGenerator {
 
       const operation: SwaggerOperation = {
         tags: [this.deriveTag(normalizedPath)],
-        parameters: parameters.length ? parameters : undefined,
+        parameters: parameters.length > 0 ? parameters : undefined,
         requestBody: buildRequestBody(bodySchema),
         responses: {
           '200': buildResponse(responseSchema),
@@ -300,7 +317,7 @@ export class SwaggerGenerator {
     extraInSwagger: string[];
   } {
     const doc = this.generate();
-    const routerEndpoints = extractEndpoints(this.router);
+    const routerEndpoints = this.getEndpoints(); // Use cached endpoints
 
     const swaggerEndpoints = new Set<string>();
     for (const [pathValue, methods] of Object.entries(doc.paths)) {
@@ -315,12 +332,20 @@ export class SwaggerGenerator {
       ),
     );
 
-    const missingInSwagger = [...routerEndpointKeys].filter(
-      (key) => !swaggerEndpoints.has(key),
-    );
-    const extraInSwagger = [...swaggerEndpoints].filter(
-      (key) => !routerEndpointKeys.has(key),
-    );
+    const missingInSwagger: string[] = [];
+    const extraInSwagger: string[] = [];
+
+    // Single pass comparisons
+    for (const key of routerEndpointKeys) {
+      if (!swaggerEndpoints.has(key)) {
+        missingInSwagger.push(key);
+      }
+    }
+    for (const key of swaggerEndpoints) {
+      if (!routerEndpointKeys.has(key)) {
+        extraInSwagger.push(key);
+      }
+    }
 
     return {
       totalRoutes: routerEndpointKeys.size,
