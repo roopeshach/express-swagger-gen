@@ -127,7 +127,9 @@ export function validateQuery(schema: AnyZodObject): RequestHandler {
     next: NextFunction,
   ) => {
     try {
-      req.query = schema.parse(req.query);
+      const parsed = schema.parse(req.query);
+      // Store parsed query in a custom property since req.query may be read-only
+      (req as any).validatedQuery = parsed;
       return next();
     } catch (error) {
       return next(error);
