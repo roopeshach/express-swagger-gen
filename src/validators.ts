@@ -37,7 +37,7 @@ const attachSwaggerMeta = (
  * @example
  * ```typescript
  * import { z } from 'zod';
- * import { validateBody } from 'express-swagger-gen';
+ * import { validateBody } from 'zod-express-swagger';
  *
  * const CreateUserSchema = z.object({
  *   name: z.string(),
@@ -74,7 +74,7 @@ export function validateBody(schema: ZodTypeAny): RequestHandler {
  * @example
  * ```typescript
  * import { z } from 'zod';
- * import { validateParams } from 'express-swagger-gen';
+ * import { validateParams } from 'zod-express-swagger';
  *
  * const UserParamsSchema = z.object({
  *   userId: z.string().uuid(),
@@ -110,7 +110,7 @@ export function validateParams(schema: AnyZodObject): RequestHandler {
  * @example
  * ```typescript
  * import { z } from 'zod';
- * import { validateQuery } from 'express-swagger-gen';
+ * import { validateQuery } from 'zod-express-swagger';
  *
  * const PaginationSchema = z.object({
  *   page: z.string().optional().transform(Number),
@@ -148,7 +148,7 @@ export function validateQuery(schema: AnyZodObject): RequestHandler {
  * @example
  * ```typescript
  * import { z } from 'zod';
- * import { validateResponse } from 'express-swagger-gen';
+ * import { validateResponse } from 'zod-express-swagger';
  *
  * const UserResponseSchema = z.object({
  *   id: z.string(),
@@ -211,7 +211,7 @@ export function validateResponse(
  *
  * @example
  * ```typescript
- * import { tagMiddleware } from 'express-swagger-gen';
+ * import { tagMiddleware } from 'zod-express-swagger';
  *
  * const myExistingMiddleware = (req, res, next) => { ... };
  *

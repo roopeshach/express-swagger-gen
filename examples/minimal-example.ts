@@ -1,10 +1,10 @@
 /**
- * Minimal example - Quick start with express-swagger-gen
+ * Minimal example - Quick start with zod-express-swagger
  */
 
 import express from 'express';
 import { z } from 'zod';
-import { validateBody, validateQuery, SwaggerGenerator, serveSwaggerUI } from 'express-swagger-gen';
+import { validateBody, validateQuery, SwaggerGenerator, serveSwaggerUI } from 'zod-express-swagger';
 
 const app = express();
 const router = express.Router();

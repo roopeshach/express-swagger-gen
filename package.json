@@ -1,5 +1,5 @@
 {
-  "name": "express-swagger-gen",
+  "name": "zod-express-swagger",
   "version": "1.0.0",
   "description": "Auto-generate OpenAPI 3.0 documentation from Express routes with Zod schema validation",
   "main": "dist/index.js",
@@ -18,7 +18,7 @@
     }
   },
   "bin": {
-    "express-swagger-gen": "./dist/cli.js"
+    "zod-express-swagger": "./dist/cli.js"
   },
   "files": [
     "dist",

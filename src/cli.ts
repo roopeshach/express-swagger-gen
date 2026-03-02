@@ -56,10 +56,10 @@ const parseArgs = (args: string[]): CliOptions => {
 
 const showHelp = (): void => {
   console.log(`
-express-swagger-gen - Auto-generate OpenAPI documentation from Express routes
+zod-express-swagger - Auto-generate OpenAPI documentation from Express routes
 
 USAGE:
-  express-swagger-gen [options]
+  zod-express-swagger [options]
 
 OPTIONS:
   -r, --router <path>   Path to the file that exports the Express router
@@ -71,10 +71,10 @@ OPTIONS:
 
 EXAMPLES:
   # Generate swagger from router file
-  express-swagger-gen -r ./src/routes/index.ts -o ./docs/swagger.yaml
+  zod-express-swagger -r ./src/routes/index.ts -o ./docs/swagger.yaml
 
   # Use a config file
-  express-swagger-gen -c ./swagger.config.js
+  zod-express-swagger -c ./swagger.config.js
 
 CONFIG FILE FORMAT (swagger.config.js):
   module.exports = {
@@ -115,9 +115,9 @@ const showVersion = (): void => {
   try {
     const pkgPath = path.join(__dirname, '..', 'package.json');
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-    console.log(`express-swagger-gen v${pkg.version}`);
+    console.log(`zod-express-swagger v${pkg.version}`);
   } catch {
-    console.log('express-swagger-gen v1.0.0');
+    console.log('zod-express-swagger v1.0.0');
   }
 };
 

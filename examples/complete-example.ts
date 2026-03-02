@@ -1,5 +1,5 @@
 /**
- * Complete example of using express-swagger-gen
+ * Complete example of using zod-express-swagger
  */
 
 import express from 'express';
@@ -10,7 +10,7 @@ import {
   validateQuery,
   validateResponse,
   setupSwagger,
-} from 'express-swagger-gen';
+} from 'zod-express-swagger';
 
 // ============================================
 // Define Zod Schemas
@@ -186,7 +186,7 @@ setupSwagger(app, router, {
     info: {
       title: 'Example API',
       version: '1.0.0',
-      description: 'Example API demonstrating express-swagger-gen',
+      description: 'Example API demonstrating zod-express-swagger',
       contact: {
         name: 'API Support',
         email: 'support@example.com',

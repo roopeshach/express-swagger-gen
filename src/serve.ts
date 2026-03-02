@@ -19,7 +19,7 @@ import type {
  * @example
  * ```typescript
  * import express from 'express';
- * import { SwaggerGenerator, serveSwaggerUI } from 'express-swagger-gen';
+ * import { SwaggerGenerator, serveSwaggerUI } from 'zod-express-swagger';
  *
  * const app = express();
  * const router = express.Router();
@@ -102,7 +102,7 @@ export function serveSwaggerUI(
  * @example
  * ```typescript
  * import express from 'express';
- * import { createSwaggerMiddleware } from 'express-swagger-gen';
+ * import { createSwaggerMiddleware } from 'zod-express-swagger';
  *
  * const app = express();
  * const apiRouter = express.Router();
@@ -174,7 +174,7 @@ export function createSwaggerMiddleware(
  * @example
  * ```typescript
  * import express from 'express';
- * import { setupSwagger } from 'express-swagger-gen';
+ * import { setupSwagger } from 'zod-express-swagger';
  *
  * const app = express();
  * const router = express.Router();

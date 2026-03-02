@@ -31,7 +31,7 @@ const ZERO = 0;
  * @example
  * ```typescript
  * import express from 'express';
- * import { SwaggerGenerator } from 'express-swagger-gen';
+ * import { SwaggerGenerator } from 'zod-express-swagger';
  *
  * const app = express();
  * const router = express.Router();

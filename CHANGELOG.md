@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of express-swagger-gen
+- Initial release of zod-express-swagger
 - Auto-discovery of Express routes via router traversal
 - Zod schema extraction from validation middlewares
 - OpenAPI 3.0 document generation
@@ -21,5 +21,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI tool for command-line generation
 - GitHub Actions workflows for CI and automated releases
 
-[Unreleased]: https://github.com/roopeshach/express-swagger-gen/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/roopeshach/express-swagger-gen/releases/tag/v1.0.0
+[Unreleased]: https://github.com/roopeshach/zod-express-swagger/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/roopeshach/zod-express-swagger/releases/tag/v1.0.0

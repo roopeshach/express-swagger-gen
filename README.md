@@ -1,8 +1,8 @@
-# express-swagger-gen
+# zod-express-swagger
 
 Auto-generate OpenAPI 3.0 documentation from Express routes with Zod schema validation.
 
-[![npm version](https://badge.fury.io/js/express-swagger-gen.svg)](https://www.npmjs.com/package/express-swagger-gen)
+[![npm version](https://badge.fury.io/js/zod-express-swagger.svg)](https://www.npmjs.com/package/zod-express-swagger)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
@@ -18,11 +18,11 @@ Auto-generate OpenAPI 3.0 documentation from Express routes with Zod schema vali
 ## Installation
 
 ```bash
-npm install express-swagger-gen
+npm install zod-express-swagger
 # or
-yarn add express-swagger-gen
+yarn add zod-express-swagger
 # or
-pnpm add express-swagger-gen
+pnpm add zod-express-swagger
 ```
 
 ## Peer Dependencies
@@ -38,7 +38,7 @@ This package requires the following peer dependencies:
 ```typescript
 import express from 'express';
 import { z } from 'zod';
-import { validateBody, validateParams, validateQuery } from 'express-swagger-gen';
+import { validateBody, validateParams, validateQuery } from 'zod-express-swagger';
 
 const router = express.Router();
 
@@ -81,7 +81,7 @@ export { router };
 
 ```typescript
 import express from 'express';
-import { setupSwagger } from 'express-swagger-gen';
+import { setupSwagger } from 'zod-express-swagger';
 import { router } from './routes';
 
 const app = express();
@@ -165,7 +165,7 @@ router.get('/users/:id', validateResponse(UserSchema, { path: 'data' }), handler
 Main class for generating OpenAPI documentation.
 
 ```typescript
-import { SwaggerGenerator } from 'express-swagger-gen';
+import { SwaggerGenerator } from 'zod-express-swagger';
 
 const generator = new SwaggerGenerator(router, {
   info: {
@@ -237,7 +237,7 @@ interface SwaggerGeneratorOptions {
 Create middleware to serve Swagger UI.
 
 ```typescript
-import { serveSwaggerUI, SwaggerGenerator } from 'express-swagger-gen';
+import { serveSwaggerUI, SwaggerGenerator } from 'zod-express-swagger';
 
 const generator = new SwaggerGenerator(router, options);
 app.use('/docs', ...serveSwaggerUI(generator, {
@@ -251,7 +251,7 @@ app.use('/docs', ...serveSwaggerUI(generator, {
 Create a complete Swagger setup.
 
 ```typescript
-import { createSwaggerMiddleware } from 'express-swagger-gen';
+import { createSwaggerMiddleware } from 'zod-express-swagger';
 
 const { serve, document, generator, json, yaml } = createSwaggerMiddleware(
   router,
@@ -269,7 +269,7 @@ app.get('/swagger.yaml', yaml);
 Quick setup function for common use cases.
 
 ```typescript
-import { setupSwagger } from 'express-swagger-gen';
+import { setupSwagger } from 'zod-express-swagger';
 
 setupSwagger(app, router, {
   docsPath: '/docs',
@@ -286,13 +286,13 @@ Generate documentation from command line.
 
 ```bash
 # Install globally
-npm install -g express-swagger-gen
+npm install -g zod-express-swagger
 
 # Generate from router file
-express-swagger-gen -r ./src/routes/index.ts -o ./docs/swagger.yaml
+zod-express-swagger -r ./src/routes/index.ts -o ./docs/swagger.yaml
 
 # Use config file
-express-swagger-gen -c ./swagger.config.js
+zod-express-swagger -c ./swagger.config.js
 ```
 
 #### Config File Example
