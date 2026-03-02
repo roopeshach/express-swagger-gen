@@ -2,12 +2,11 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   release:
@@ -30,14 +29,14 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Create Release PR or Publish
-        id: release
-        uses: googleapis/release-please-action@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          release-type: node
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to npm
-        if: ${{ steps.release.outputs.release_created }}
-        run: npm publish
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
