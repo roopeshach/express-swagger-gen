@@ -34,6 +34,7 @@ export {
   extractEndpoints,
   normalizePath,
   collectSwaggerMeta,
+  collectSwaggerMetaMap,
   buildParametersFromSchema,
   buildRequestBody,
   buildResponse,

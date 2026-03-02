@@ -1,4 +1,5 @@
-import type { NextFunction, Request, RequestHandler, Response, Router } from 'express';
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
+import type { Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
 
 import { SwaggerGenerator } from './generator';
