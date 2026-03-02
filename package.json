@@ -1,0 +1,73 @@
+{
+  "name": "express-swagger-gen",
+  "version": "1.0.0",
+  "description": "Auto-generate OpenAPI 3.0 documentation from Express routes with Zod schema validation",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.mjs",
+      "require": "./dist/cli.js"
+    }
+  },
+  "bin": {
+    "express-swagger-gen": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src --ext .ts",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "express",
+    "swagger",
+    "openapi",
+    "api-docs",
+    "zod",
+    "documentation",
+    "auto-generate",
+    "rest-api",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "peerDependencies": {
+    "express": "^4.0.0 || ^5.0.0",
+    "zod": "^3.0.0"
+  },
+  "dependencies": {
+    "swagger-ui-express": "^5.0.0",
+    "yaml": "^2.3.4",
+    "zod-to-json-schema": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "@types/swagger-ui-express": "^4.1.6",
+    "express": "^4.18.2",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.0",
+    "zod": "^3.22.4"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
